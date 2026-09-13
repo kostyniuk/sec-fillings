@@ -128,7 +128,6 @@ describe("GET /api/companies/:ticker/filings", () => {
   });
 
   it("400s when a cursor is reused with a different form filter", async () => {
-    // Cursor points at the form-4 filing, which the 10-Q filter excludes.
     const { body } = await getFilings("/api/companies/AAPL/filings?limit=1");
     const res = await call(
       `/api/companies/AAPL/filings?form=10-Q&cursor=${body.page.nextCursor}`,

@@ -1,7 +1,6 @@
 import type { Company, Filing } from "@/server/domain";
 import { EdgarShapeError, type FilingColumns, type SubmissionsResponse } from "./schemas";
 
-// EDGAR pads CIKs to 10 digits in URLs; ours arrive unpadded from the ticker map.
 export function padCik(cik: string | number): string {
   const digits = String(cik);
   if (!/^\d{1,10}$/.test(digits)) {
@@ -10,7 +9,6 @@ export function padCik(cik: string | number): string {
   return digits.padStart(10, "0");
 }
 
-// Columns EDGAR and Filing name identically; the rest are converted in toFiling.
 const COPIED = [
   "accessionNumber",
   "filingDate",
@@ -29,12 +27,12 @@ const COPIED = [
 type CopiedKey = (typeof COPIED)[number];
 
 export type FilingSelection = {
-  since: string;
+  since?: string;
   forms?: Set<string>;
 };
 
-// Index alignment is the only thing tying the columns together, so a length
-// mismatch makes the payload unusable rather than merely surprising.
+// Index alignment is all that ties the columns together, so ragged columns
+// would zip fields across filings.
 function rowCount(columns: FilingColumns): number {
   const count = columns.accessionNumber.length;
 
@@ -52,7 +50,7 @@ function rowCount(columns: FilingColumns): number {
 
 const isSelected = (columns: FilingColumns, i: number, select: FilingSelection) =>
   // Both sides are YYYY-MM-DD, so lexical order is chronological order.
-  columns.filingDate[i] >= select.since &&
+  (!select.since || columns.filingDate[i] >= select.since) &&
   (!select.forms || select.forms.has(columns.form[i].toUpperCase()));
 
 const toFiling = (columns: FilingColumns, i: number): Filing => ({

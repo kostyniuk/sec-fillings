@@ -1,7 +1,6 @@
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// SEC caps clients at 10 req/s. Callers queue only long enough to claim a slot,
-// then run concurrently. Per-process: on serverless each instance has its own budget.
+// SEC caps clients at 10 req/s. Per-process: each instance has its own budget.
 const MIN_INTERVAL_MS = 110;
 
 let lastStart = 0;

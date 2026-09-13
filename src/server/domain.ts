@@ -37,3 +37,29 @@ export type CompanyFilings = {
     nextCursor: string | null;
   };
 };
+
+export class UnknownTickerError extends Error {
+  constructor(readonly tickers: string[]) {
+    const quoted = tickers.map((t) => `"${t}"`).join(", ");
+    super(
+      tickers.length === 1
+        ? `No SEC registrant found for ticker ${quoted}`
+        : `No SEC registrant found for tickers ${quoted}`,
+    );
+    this.name = "UnknownTickerError";
+  }
+}
+
+// `recent` holds 1,000 filings or one year, whichever is more, so it can reach back a decade.
+const WINDOW_MONTHS = 12;
+
+export function cutoff(now: Date): string {
+  const from = new Date(now);
+  from.setMonth(from.getMonth() - WINDOW_MONTHS);
+  return from.toISOString().slice(0, 10);
+}
+
+// EDGAR makes no promise about ties, and keyset paging needs a total order.
+export const newestFirst = (a: Filing, b: Filing) =>
+  b.filingDate.localeCompare(a.filingDate) ||
+  b.accessionNumber.localeCompare(a.accessionNumber);

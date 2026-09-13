@@ -1,5 +1,5 @@
-// Shapes mirror the real EDGAR payloads; only the row counts are small.
-// Dates are relative to today so the 12-month window stays meaningful over time.
+// Shapes mirror the real EDGAR payloads. Dates are relative to today so the
+// 12-month window stays meaningful over time.
 
 const daysAgo = (n: number) =>
   new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
@@ -105,7 +105,6 @@ export const appleSubmissions = {
   },
 };
 
-// For paging cases the three rows above can't express: ties, exactly-full pages.
 export const makeRow = (over: Partial<Row> & Pick<Row, "accessionNumber" | "filingDate">): Row => ({
   ...rows[0],
   ...over,
@@ -116,7 +115,6 @@ export const makeSubmissions = (source: Row[]) => ({
   filings: { ...appleSubmissions.filings, recent: toColumns(source) },
 });
 
-// A second registrant, so cursors can be tested across tickers.
 export const nvidiaSubmissions = {
   ...appleSubmissions,
   cik: "0001045810",

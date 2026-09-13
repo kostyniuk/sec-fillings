@@ -1,8 +1,7 @@
 import { t, type Static } from "elysia";
 import { Value } from "@sinclair/typebox/value";
 
-// Column-oriented: every key is an array, and the i-th element of each
-// describes one filing.
+// Column-oriented: every key is an array, index i is one filing.
 const FilingColumns = t.Object({
   accessionNumber: t.Array(t.String()),
   filingDate: t.Array(t.String()),
@@ -22,8 +21,6 @@ const FilingColumns = t.Object({
   primaryDocDescription: t.Array(t.String()),
 });
 
-// Only the fields we use are pinned; the object stays open so new EDGAR keys
-// don't fail validation.
 const SubmissionsResponse = t.Object({
   cik: t.String(),
   name: t.String(),
