@@ -17,7 +17,13 @@ src/
   app/
     api/[[...slugs]]/route.ts   # forwards every /api request to Elysia
     page.tsx
-  server/index.ts               # the Elysia app (add routes here)
+  server/
+    index.ts                    # composes routers
+    domain.ts                   # Filing, Company, CompanyFilings
+    routes/                     # HTTP shape only
+    services/                   # business logic
+    integrations/edgar/         # SEC client, schemas, mappers
+    lib/                        # env, http
   lib/eden.ts                   # typed client (api.health.get(), ...)
   components/ui/                # shadcn components
 ```
@@ -25,10 +31,12 @@ src/
 ## Commands
 
 ```bash
-bun run dev     # dev server on :3000
-bun run build   # production build + typecheck
+bun run dev       # web + API on :3000
+bun run build     # production build + typecheck
+bun run test      # bun test, EDGAR fetches mocked
 bun run lint
 bun x shadcn@latest add <component>
 ```
 
-Set `NEXT_PUBLIC_APP_URL` for the Eden client when not on `http://localhost:3000`.
+Copy `.env.example` to `.env.local`. `SEC_USER_AGENT` must carry a real contact
+email or the SEC will throttle you.

@@ -1,11 +1,7 @@
-import { Elysia, t } from "elysia";
+import { Elysia } from "elysia";
+import { companies } from "./routes/companies";
+import { health } from "./routes/health";
 
-export const app = new Elysia({ prefix: "/api" })
-  .get("/health", () => ({ ok: true, at: new Date().toISOString() }))
-  .post(
-    "/echo",
-    ({ body }) => ({ echo: body.message }),
-    { body: t.Object({ message: t.String() }) },
-  );
+export const app = new Elysia({ prefix: "/api" }).use(health).use(companies);
 
 export type App = typeof app;
