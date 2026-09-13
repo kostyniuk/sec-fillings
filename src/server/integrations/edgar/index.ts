@@ -1,10 +1,10 @@
-import type { CompanyFilings } from "@/server/domain";
+import type { Company, Filing } from "@/server/domain";
 import { edgar } from "./client";
-import { padCik, toCompany, toFilings } from "./mappers";
+import { padCik, toCompany, toFilings, type FilingSelection } from "./mappers";
 import { parseCompanyTickers, parseSubmissions } from "./schemas";
 
 export { EdgarShapeError } from "./schemas";
-export { padCik } from "./mappers";
+export { padCik, type FilingSelection } from "./mappers";
 
 // One ~800KB file covering every registrant, so it's fetched once per process.
 let cachedTickerIndex: Promise<Map<string, string>> | undefined;
@@ -26,7 +26,6 @@ function loadTickerIndex(): Promise<Map<string, string>> {
   return cachedTickerIndex;
 }
 
-// Used by tests to keep cases independent.
 export function resetTickerIndex(): void {
   cachedTickerIndex = undefined;
 }
@@ -38,13 +37,12 @@ export async function cikForTicker(ticker: string): Promise<string | null> {
 
 export async function getCompanyFilings(
   cik: string,
-  since: string,
-): Promise<CompanyFilings> {
+  select: FilingSelection,
+): Promise<{ company: Company; filings: Filing[] }> {
   const res = parseSubmissions(await edgar.submissions(padCik(cik)));
 
   return {
     company: toCompany(res),
-    since,
-    filings: toFilings(res.filings.recent, since),
+    filings: toFilings(res.filings.recent, select),
   };
 }

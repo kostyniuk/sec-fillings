@@ -10,7 +10,7 @@ export function padCik(cik: string | number): string {
   return digits.padStart(10, "0");
 }
 
-// Columns EDGAR and Filing name identically; everything else is converted below.
+// Columns EDGAR and Filing name identically; the rest are converted in toFiling.
 const COPIED = [
   "accessionNumber",
   "filingDate",
@@ -28,15 +28,14 @@ const COPIED = [
 
 type CopiedKey = (typeof COPIED)[number];
 
-const copied = (columns: FilingColumns, i: number) =>
-  Object.fromEntries(COPIED.map((key) => [key, columns[key][i]])) as Pick<
-    Filing,
-    CopiedKey
-  >;
+export type FilingSelection = {
+  since: string;
+  forms?: Set<string>;
+};
 
 // Index alignment is the only thing tying the columns together, so a length
 // mismatch makes the payload unusable rather than merely surprising.
-export function toFilings(columns: FilingColumns, since: string): Filing[] {
+function rowCount(columns: FilingColumns): number {
   const count = columns.accessionNumber.length;
 
   for (const [key, values] of Object.entries(columns)) {
@@ -48,20 +47,32 @@ export function toFilings(columns: FilingColumns, since: string): Filing[] {
     }
   }
 
+  return count;
+}
+
+const isSelected = (columns: FilingColumns, i: number, select: FilingSelection) =>
+  // Both sides are YYYY-MM-DD, so lexical order is chronological order.
+  columns.filingDate[i] >= select.since &&
+  (!select.forms || select.forms.has(columns.form[i].toUpperCase()));
+
+const toFiling = (columns: FilingColumns, i: number): Filing => ({
+  ...(Object.fromEntries(COPIED.map((key) => [key, columns[key][i]])) as Pick<
+    Filing,
+    CopiedKey
+  >),
+  coreType: columns.core_type[i],
+  isXBRL: Boolean(columns.isXBRL[i]),
+  isInlineXBRL: Boolean(columns.isInlineXBRL[i]),
+  isXBRLNumeric:
+    columns.isXBRLNumeric[i] === null ? null : Boolean(columns.isXBRLNumeric[i]),
+});
+
+export function toFilings(columns: FilingColumns, select: FilingSelection): Filing[] {
+  const count = rowCount(columns);
   const filings: Filing[] = [];
 
   for (let i = 0; i < count; i++) {
-    // Both sides are YYYY-MM-DD, so lexical order is chronological order.
-    if (columns.filingDate[i] < since) continue;
-
-    filings.push({
-      ...copied(columns, i),
-      coreType: columns.core_type[i],
-      isXBRL: Boolean(columns.isXBRL[i]),
-      isInlineXBRL: Boolean(columns.isInlineXBRL[i]),
-      isXBRLNumeric:
-        columns.isXBRLNumeric[i] === null ? null : Boolean(columns.isXBRLNumeric[i]),
-    });
+    if (isSelected(columns, i, select)) filings.push(toFiling(columns, i));
   }
 
   return filings;

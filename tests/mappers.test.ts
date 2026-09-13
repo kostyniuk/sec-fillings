@@ -24,7 +24,7 @@ describe("padCik", () => {
 
 describe("toFilings", () => {
   it("zips columns into rows, preserving index alignment", () => {
-    const filings = toFilings(recentColumns, EPOCH);
+    const filings = toFilings(recentColumns, { since: EPOCH });
 
     expect(filings).toHaveLength(3);
     expect(filings.map((f) => f.accessionNumber)).toEqual(
@@ -36,7 +36,7 @@ describe("toFilings", () => {
   });
 
   it("renames core_type and converts the XBRL flags", () => {
-    const [form4, tenQ] = toFilings(recentColumns, EPOCH);
+    const [form4, tenQ] = toFilings(recentColumns, { since: EPOCH });
 
     expect(form4.coreType).toBe("4");
     expect(form4.isXBRL).toBe(false);
@@ -51,7 +51,7 @@ describe("toFilings", () => {
 
   it("drops filings older than the cutoff", () => {
     const cutoff = new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10);
-    const filings = toFilings(recentColumns, cutoff);
+    const filings = toFilings(recentColumns, { since: cutoff });
 
     expect(filings).toHaveLength(2);
     expect(filings.every((f) => f.filingDate >= cutoff)).toBe(true);
@@ -60,16 +60,23 @@ describe("toFilings", () => {
 
   it("keeps a filing landing exactly on the cutoff", () => {
     const cutoff = recentColumns.filingDate[1];
-    const filings = toFilings(recentColumns, cutoff);
+    const filings = toFilings(recentColumns, { since: cutoff });
 
     expect(filings.map((f) => f.filingDate)).toContain(cutoff);
+  });
+
+  it("keeps only the requested forms, case-insensitively", () => {
+    const forms = new Set(["10-q"].map((f) => f.toUpperCase()));
+    const filings = toFilings(recentColumns, { since: EPOCH, forms });
+
+    expect(filings.map((f) => f.form)).toEqual(["10-Q"]);
   });
 
   it("rejects misaligned columns instead of zipping garbage", () => {
     const broken = { ...recentColumns, form: ["4"] };
 
-    expect(() => toFilings(broken, EPOCH)).toThrow(EdgarShapeError);
-    expect(() => toFilings(broken, EPOCH)).toThrow(/column "form" has 1 rows/);
+    expect(() => toFilings(broken, { since: EPOCH })).toThrow(EdgarShapeError);
+    expect(() => toFilings(broken, { since: EPOCH })).toThrow(/column "form" has 1 rows/);
   });
 });
 

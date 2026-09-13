@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, mock } from "bun:test";
 import { resetTickerIndex } from "@/server/integrations/edgar";
-import { appleSubmissions, companyTickers } from "../fixtures/edgar";
+import { appleSubmissions, companyTickers, nvidiaSubmissions } from "../fixtures/edgar";
 
 const realFetch = globalThis.fetch;
 
@@ -16,11 +16,13 @@ export function stubEdgar(overrides: Record<string, () => Response> = {}) {
     if (url.includes("/submissions/CIK0000320193.json")) {
       return Response.json(appleSubmissions);
     }
+    if (url.includes("/submissions/CIK0001045810.json")) {
+      return Response.json(nvidiaSubmissions);
+    }
     throw new Error(`Unexpected fetch in test: ${url}`);
   }) as unknown as typeof fetch;
 }
 
-// Fresh stub and empty ticker cache per test, real fetch restored after.
 export function installEdgarStub() {
   beforeEach(() => {
     resetTickerIndex();

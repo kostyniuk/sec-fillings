@@ -65,7 +65,7 @@ const rows = [
   },
 ];
 
-type Row = (typeof rows)[number];
+export type Row = (typeof rows)[number];
 type Columns = { [K in keyof Row]: Row[K][] };
 
 const toColumns = (source: Row[]): Columns =>
@@ -102,5 +102,31 @@ export const appleSubmissions = {
         filingTo: "2015-07-22",
       },
     ],
+  },
+};
+
+// For paging cases the three rows above can't express: ties, exactly-full pages.
+export const makeRow = (over: Partial<Row> & Pick<Row, "accessionNumber" | "filingDate">): Row => ({
+  ...rows[0],
+  ...over,
+});
+
+export const makeSubmissions = (source: Row[]) => ({
+  ...appleSubmissions,
+  filings: { ...appleSubmissions.filings, recent: toColumns(source) },
+});
+
+// A second registrant, so cursors can be tested across tickers.
+export const nvidiaSubmissions = {
+  ...appleSubmissions,
+  cik: "0001045810",
+  name: "NVIDIA CORP",
+  tickers: ["NVDA"],
+  filings: {
+    ...appleSubmissions.filings,
+    recent: toColumns([
+      makeRow({ accessionNumber: "0001045810-26-000010", filingDate: daysAgo(3) }),
+      makeRow({ accessionNumber: "0001045810-26-000011", filingDate: daysAgo(9) }),
+    ]),
   },
 };

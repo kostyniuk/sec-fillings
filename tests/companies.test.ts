@@ -78,7 +78,75 @@ describe("GET /api/companies/:ticker/filings", () => {
     const { body } = await getFilings("/api/companies/AAPL/filings");
 
     expect(body).not.toHaveProperty("archives");
-    expect(Object.keys(body).sort()).toEqual(["company", "filings", "since"]);
+    expect(Object.keys(body).sort()).toEqual(["company", "filings", "page", "since"]);
+  });
+
+  it("defaults to a single page with no cursor when everything fits", async () => {
+    const { body } = await getFilings("/api/companies/AAPL/filings");
+
+    expect(body.page).toEqual({ limit: 50, nextCursor: null });
+  });
+
+  it("filters by form, case-insensitively", async () => {
+    const { body } = await getFilings("/api/companies/AAPL/filings?form=10-q");
+
+    expect(body.filings.map((f) => f.form)).toEqual(["10-Q"]);
+  });
+
+  it("combines repeated form params", async () => {
+    const { body } = await getFilings("/api/companies/AAPL/filings?form=4&form=10-Q");
+
+    expect(body.filings.map((f) => f.form)).toEqual(["4", "10-Q"]);
+  });
+
+  it("walks pages by cursor without repeating or dropping rows", async () => {
+    const { body: all } = await getFilings("/api/companies/AAPL/filings");
+    const seen: string[] = [];
+    let cursor: string | null = null;
+
+    do {
+      const path = `/api/companies/AAPL/filings?limit=1${cursor ? `&cursor=${cursor}` : ""}`;
+      const { body }: { body: CompanyFilings } = await getFilings(path);
+
+      expect(body.filings).toHaveLength(1);
+      seen.push(body.filings[0].accessionNumber);
+      cursor = body.page.nextCursor;
+    } while (cursor);
+
+    expect(seen).toEqual(all.filings.map((f) => f.accessionNumber));
+    expect(new Set(seen).size).toBe(seen.length);
+  });
+
+  it("400s when a cursor from another ticker is reused", async () => {
+    const { body } = await getFilings("/api/companies/AAPL/filings?limit=1");
+    const res = await call(
+      `/api/companies/NVDA/filings?limit=1&cursor=${body.page.nextCursor}`,
+    );
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(/does not belong to this query/);
+  });
+
+  it("400s when a cursor is reused with a different form filter", async () => {
+    // Cursor points at the form-4 filing, which the 10-Q filter excludes.
+    const { body } = await getFilings("/api/companies/AAPL/filings?limit=1");
+    const res = await call(
+      `/api/companies/AAPL/filings?form=10-Q&cursor=${body.page.nextCursor}`,
+    );
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(/does not belong to this query/);
+  });
+
+  it("400s on a cursor that names no filing in this list", async () => {
+    const res = await call("/api/companies/AAPL/filings?cursor=not-a-cursor");
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(/does not belong to this query/);
+  });
+
+  it("422s on a limit above the maximum", async () => {
+    expect((await call("/api/companies/AAPL/filings?limit=999")).status).toBe(422);
   });
 
   it("is case-insensitive on the ticker", async () => {

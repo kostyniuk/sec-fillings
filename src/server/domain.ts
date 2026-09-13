@@ -29,8 +29,11 @@ export type Company = {
 
 export type CompanyFilings = {
   company: Company;
-  // Cutoff the filings were selected against, YYYY-MM-DD.
   since: string;
-  // Newest first, every filingDate >= since.
+  // Newest first.
   filings: Filing[];
+  page: {
+    limit: number;
+    nextCursor: string | null;
+  };
 };
