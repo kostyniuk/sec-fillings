@@ -17,8 +17,10 @@ type RawParams = Record<string, string | string[] | undefined>;
 const list = (value: string | string[] | undefined): string[] =>
   value === undefined ? [] : Array.isArray(value) ? value : [value];
 
-const single = (value: string | string[] | undefined): string | undefined =>
-  Array.isArray(value) ? value[0] : value;
+const single = (value: string | string[] | undefined): string | undefined => {
+  const first = Array.isArray(value) ? value.at(-1) : value;
+  return first?.trim() ? first : undefined;
+};
 
 export function parseFilingsParams(raw: RawParams): FilingsParams {
   const limit = Number(single(raw.limit));
@@ -35,7 +37,9 @@ export function parseFilingsParams(raw: RawParams): FilingsParams {
 export function toSearchParams(params: FilingsParams): URLSearchParams {
   const search = new URLSearchParams();
 
-  if (params.ticker !== DEFAULT_TICKER) search.set("ticker", params.ticker);
+  if (params.ticker && params.ticker !== DEFAULT_TICKER) {
+    search.set("ticker", params.ticker);
+  }
   for (const form of params.forms) search.append("form", form);
   if (params.order !== "desc") search.set("order", params.order);
   if (params.limit !== DEFAULT_LIMIT) search.set("limit", String(params.limit));

@@ -70,3 +70,6 @@ export const byFilingDate =
       x.accessionNumber.localeCompare(y.accessionNumber)
     );
   };
+
+export const filingUrl = (cik: string, accessionNumber: string, primaryDocument: string) =>
+  `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accessionNumber.replaceAll("-", "")}/${primaryDocument}`;

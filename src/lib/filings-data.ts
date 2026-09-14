@@ -20,3 +20,6 @@ export const getFilingsPage = (ticker: string, query: FilingsQuery) =>
 
 export const getFormCounts = async (ticker: string) =>
   (await summariseCompanies([ticker], new Date(), deps)).companies[0]?.counts ?? {};
+
+export const getSummary = (tickers: string[]) =>
+  summariseCompanies(tickers, new Date(), deps);

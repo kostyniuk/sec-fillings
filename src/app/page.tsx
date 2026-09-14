@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { columns } from "@/components/filings/columns";
@@ -8,6 +9,11 @@ import { parseFilingsParams, toSearchParams } from "@/lib/filings-params";
 import { getFilingsPage, getFormCounts } from "@/lib/filings-data";
 import { UnknownTickerError } from "@/server/domain";
 import { InvalidCursorError } from "@/server/lib/cursor";
+
+export const metadata: Metadata = {
+  title: "SEC filings",
+  description: "Filings from the last 12 months, straight from EDGAR.",
+};
 
 async function FilingsView({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
   const params = parseFilingsParams(await searchParams);

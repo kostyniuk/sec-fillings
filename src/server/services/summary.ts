@@ -1,9 +1,16 @@
-import { byFilingDate, cutoff, UnknownTickerError, type Company } from "@/server/domain";
+import {
+  byFilingDate,
+  cutoff,
+  filingUrl,
+  UnknownTickerError,
+  type Company,
+} from "@/server/domain";
 import {
   cikForTicker,
   getCompanyFilings,
   type EdgarDeps,
 } from "@/server/integrations/edgar";
+import { MAX_COMPANIES } from "@/lib/limits";
 
 export type CompanySummary = {
   company: Company;
@@ -11,15 +18,13 @@ export type CompanySummary = {
   // integer-like, so JS always iterates them numerically first.
   counts: Record<string, number>;
   // Searched across all of EDGAR's inline history, not just the count window.
-  latest10K: string | null;
+  latest10K: { filingDate: string; accessionNumber: string; url: string } | null;
 };
 
 export type FilingsSummary = {
   since: string;
   companies: CompanySummary[];
 };
-
-export const MAX_COMPANIES = 10;
 
 export class TooManyCompaniesError extends Error {
   constructor(readonly count: number) {
@@ -54,10 +59,18 @@ export async function summariseCompanies(
         if (f.filingDate >= since) counts[f.form] = (counts[f.form] ?? 0) + 1;
       }
 
+      const latest = filings.find((f) => f.form === "10-K");
+
       return {
         company,
         counts,
-        latest10K: filings.find((f) => f.form === "10-K")?.filingDate ?? null,
+        latest10K: latest
+          ? {
+              filingDate: latest.filingDate,
+              accessionNumber: latest.accessionNumber,
+              url: filingUrl(company.cik, latest.accessionNumber, latest.primaryDocument),
+            }
+          : null,
       };
     }),
   );

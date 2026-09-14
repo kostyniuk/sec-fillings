@@ -1,8 +1,10 @@
 "use client";
 
 import { CompanySelect } from "./company-select";
-import { FormFilter, type FormOption } from "./form-filter";
+import { MultiSelect } from "./multi-select";
 import { useFilingsParams } from "./use-filings-params";
+
+export type FormOption = { form: string; count: number };
 
 export function Filters({ formOptions }: { formOptions: FormOption[] }) {
   const { params, isPending, setFilter } = useFilingsParams();
@@ -14,11 +16,15 @@ export function Filters({ formOptions }: { formOptions: FormOption[] }) {
         disabled={isPending}
         onChange={(ticker) => setFilter({ ticker, forms: [] })}
       />
-      <FormFilter
-        options={formOptions}
+      <MultiSelect
+        options={formOptions.map((o) => ({ value: o.form, hint: String(o.count) }))}
         value={params.forms}
         disabled={isPending}
         onChange={(forms) => setFilter({ forms })}
+        placeholder="All form types"
+        selectedLabel={(n) => `${n} form types`}
+        searchLabel="Search form type…"
+        emptyLabel="No form type found."
       />
     </div>
   );

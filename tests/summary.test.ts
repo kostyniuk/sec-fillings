@@ -31,8 +31,16 @@ describe("GET /api/filings/summary", () => {
   it("reports the latest 10-K even when it predates the count window", async () => {
     const { body } = await summary("?ticker=AAPL");
 
-    expect(body.companies[0].latest10K).toBe(daysAgo(ARCHIVED_DAYS));
+    expect(body.companies[0].latest10K?.filingDate).toBe(daysAgo(ARCHIVED_DAYS));
     expect(body.companies[0].counts["10-K"]).toBeUndefined();
+  });
+
+  it("links the latest 10-K to its document on EDGAR", async () => {
+    const { body } = await summary("?ticker=AAPL");
+
+    expect(body.companies[0].latest10K?.url).toBe(
+      "https://www.sec.gov/Archives/edgar/data/320193/000032019324000001/aapl-20240928.htm",
+    );
   });
 
   it("returns null when a company has filed no 10-K", async () => {
