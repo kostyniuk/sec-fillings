@@ -70,3 +70,17 @@ describe("cursor paging", () => {
     expect(res.page.nextCursor).toBeNull();
   });
 });
+
+describe("ordering", () => {
+  it("returns oldest first when asked, and pages in that direction", async () => {
+    serve([
+      makeRow({ accessionNumber: "d-1", filingDate: daysAgo(1) }),
+      makeRow({ accessionNumber: "d-2", filingDate: daysAgo(2) }),
+      makeRow({ accessionNumber: "d-3", filingDate: daysAgo(3) }),
+    ]);
+
+    const { seen } = await walk({ limit: 1, order: "asc" });
+
+    expect(seen).toEqual(["d-3", "d-2", "d-1"]);
+  });
+});

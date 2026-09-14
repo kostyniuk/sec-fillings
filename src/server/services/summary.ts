@@ -1,9 +1,4 @@
-import {
-  cutoff,
-  newestFirst,
-  UnknownTickerError,
-  type Company,
-} from "@/server/domain";
+import { byFilingDate, cutoff, UnknownTickerError, type Company } from "@/server/domain";
 import { cikForTicker, getCompanyFilings } from "@/server/integrations/edgar";
 
 export type CompanySummary = {
@@ -47,7 +42,7 @@ export async function summariseCompanies(
   const companies = await Promise.all(
     resolved.map(async ({ cik }) => {
       const { company, filings } = await getCompanyFilings(cik!, {});
-      filings.sort(newestFirst);
+      filings.sort(byFilingDate("desc"));
 
       const counts: Record<string, number> = {};
       for (const f of filings) {

@@ -1,8 +1,9 @@
 import {
+  byFilingDate,
   cutoff,
-  newestFirst,
   UnknownTickerError,
   type CompanyFilings,
+  type FilingOrder,
 } from "@/server/domain";
 import { cikForTicker, getCompanyFilings } from "@/server/integrations/edgar";
 import { decodeCursor, encodeCursor, InvalidCursorError } from "@/server/lib/cursor";
@@ -14,12 +15,13 @@ export type FilingsQuery = {
   forms?: string[];
   limit?: number;
   cursor?: string;
+  order?: FilingOrder;
   now?: Date;
 };
 
 export async function filingsForTicker(
   ticker: string,
-  { forms, limit = DEFAULT_LIMIT, cursor, now = new Date() }: FilingsQuery = {},
+  { forms, limit = DEFAULT_LIMIT, cursor, order = "desc", now = new Date() }: FilingsQuery = {},
 ): Promise<CompanyFilings> {
   const cik = await cikForTicker(ticker);
   if (!cik) throw new UnknownTickerError([ticker]);
@@ -30,7 +32,7 @@ export async function filingsForTicker(
     forms: forms?.length ? new Set(forms.map((f) => f.toUpperCase())) : undefined,
   });
 
-  filings.sort(newestFirst);
+  filings.sort(byFilingDate(order));
 
   // Accession numbers are unique across EDGAR, so a cursor from another query
   // isn't in this list.

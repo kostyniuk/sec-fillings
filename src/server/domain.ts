@@ -30,7 +30,6 @@ export type Company = {
 export type CompanyFilings = {
   company: Company;
   since: string;
-  // Newest first.
   filings: Filing[];
   page: {
     limit: number;
@@ -59,7 +58,15 @@ export function cutoff(now: Date): string {
   return from.toISOString().slice(0, 10);
 }
 
+export type FilingOrder = "asc" | "desc";
+
 // EDGAR makes no promise about ties, and keyset paging needs a total order.
-export const newestFirst = (a: Filing, b: Filing) =>
-  b.filingDate.localeCompare(a.filingDate) ||
-  b.accessionNumber.localeCompare(a.accessionNumber);
+export const byFilingDate =
+  (order: FilingOrder) =>
+  (a: Filing, b: Filing) => {
+    const [x, y] = order === "desc" ? [b, a] : [a, b];
+    return (
+      x.filingDate.localeCompare(y.filingDate) ||
+      x.accessionNumber.localeCompare(y.accessionNumber)
+    );
+  };

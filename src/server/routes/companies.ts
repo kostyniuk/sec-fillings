@@ -8,6 +8,7 @@ export const companies = new Elysia({ prefix: "/companies" }).get(
       forms: query.form,
       limit: query.limit,
       cursor: query.cursor,
+      order: query.order,
     }),
   {
     params: t.Object({
@@ -17,6 +18,7 @@ export const companies = new Elysia({ prefix: "/companies" }).get(
       form: t.Optional(t.Array(t.String({ minLength: 1, maxLength: 20 }))),
       limit: t.Optional(t.Integer({ minimum: 1, maximum: MAX_LIMIT, default: DEFAULT_LIMIT })),
       cursor: t.Optional(t.String({ maxLength: 128 })),
+      order: t.Optional(t.Union([t.Literal("desc"), t.Literal("asc")], { default: "desc" })),
     }),
   },
 );
