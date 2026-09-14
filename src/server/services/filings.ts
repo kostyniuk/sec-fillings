@@ -5,7 +5,11 @@ import {
   type CompanyFilings,
   type FilingOrder,
 } from "@/server/domain";
-import { cikForTicker, getCompanyFilings } from "@/server/integrations/edgar";
+import {
+  cikForTicker,
+  getCompanyFilings,
+  type EdgarDeps,
+} from "@/server/integrations/edgar";
 import { decodeCursor, encodeCursor, InvalidCursorError } from "@/server/lib/cursor";
 
 export const DEFAULT_LIMIT = 50;
@@ -22,15 +26,20 @@ export type FilingsQuery = {
 export async function filingsForTicker(
   ticker: string,
   { forms, limit = DEFAULT_LIMIT, cursor, order = "desc", now = new Date() }: FilingsQuery = {},
+  deps: EdgarDeps = {},
 ): Promise<CompanyFilings> {
   const cik = await cikForTicker(ticker);
   if (!cik) throw new UnknownTickerError([ticker]);
 
   const since = cutoff(now);
-  const { company, filings } = await getCompanyFilings(cik, {
-    since,
-    forms: forms?.length ? new Set(forms.map((f) => f.toUpperCase())) : undefined,
-  });
+  const { company, filings } = await getCompanyFilings(
+    cik,
+    {
+      since,
+      forms: forms?.length ? new Set(forms.map((f) => f.toUpperCase())) : undefined,
+    },
+    deps,
+  );
 
   filings.sort(byFilingDate(order));
 

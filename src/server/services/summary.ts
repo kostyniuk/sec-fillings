@@ -1,5 +1,9 @@
 import { byFilingDate, cutoff, UnknownTickerError, type Company } from "@/server/domain";
-import { cikForTicker, getCompanyFilings } from "@/server/integrations/edgar";
+import {
+  cikForTicker,
+  getCompanyFilings,
+  type EdgarDeps,
+} from "@/server/integrations/edgar";
 
 export type CompanySummary = {
   company: Company;
@@ -27,6 +31,7 @@ export class TooManyCompaniesError extends Error {
 export async function summariseCompanies(
   tickers: string[],
   now = new Date(),
+  deps: EdgarDeps = {},
 ): Promise<FilingsSummary> {
   const wanted = [...new Set(tickers.map((t) => t.toUpperCase()))];
   if (wanted.length > MAX_COMPANIES) throw new TooManyCompaniesError(wanted.length);
@@ -41,7 +46,7 @@ export async function summariseCompanies(
   const since = cutoff(now);
   const companies = await Promise.all(
     resolved.map(async ({ cik }) => {
-      const { company, filings } = await getCompanyFilings(cik!, {});
+      const { company, filings } = await getCompanyFilings(cik!, {}, deps);
       filings.sort(byFilingDate("desc"));
 
       const counts: Record<string, number> = {};

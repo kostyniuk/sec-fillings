@@ -35,11 +35,16 @@ export async function cikForTicker(ticker: string): Promise<string | null> {
   return index.get(ticker.toUpperCase()) ?? null;
 }
 
+export type EdgarDeps = {
+  fetchSubmissions?: (cik: string) => Promise<unknown>;
+};
+
 export async function getCompanyFilings(
   cik: string,
   select: FilingSelection,
+  { fetchSubmissions = edgar.submissions }: EdgarDeps = {},
 ): Promise<{ company: Company; filings: Filing[] }> {
-  const res = parseSubmissions(await edgar.submissions(padCik(cik)));
+  const res = parseSubmissions(await fetchSubmissions(padCik(cik)));
 
   return {
     company: toCompany(res),
