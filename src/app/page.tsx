@@ -40,6 +40,7 @@ async function FilingsView({ searchParams }: Pick<PageProps<"/">, "searchParams"
     form: filing.form,
     company: page.company.name,
     ticker: params.ticker,
+    url: filing.url,
   }));
 
   const formOptions = Object.entries(counts)

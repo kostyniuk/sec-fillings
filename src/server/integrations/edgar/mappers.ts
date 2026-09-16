@@ -1,4 +1,4 @@
-import type { Company, Filing } from "@/server/domain";
+import { filingUrl, type Company, type Filing } from "@/server/domain";
 import { EdgarShapeError, type FilingColumns, type SubmissionsResponse } from "./schemas";
 
 export function padCik(cik: string | number): string {
@@ -53,7 +53,7 @@ const isSelected = (columns: FilingColumns, i: number, select: FilingSelection) 
   (!select.since || columns.filingDate[i] >= select.since) &&
   (!select.forms || select.forms.has(columns.form[i].toUpperCase()));
 
-const toFiling = (columns: FilingColumns, i: number): Filing => ({
+const toFiling = (columns: FilingColumns, i: number, cik: string): Filing => ({
   ...(Object.fromEntries(COPIED.map((key) => [key, columns[key][i]])) as Pick<
     Filing,
     CopiedKey
@@ -63,14 +63,19 @@ const toFiling = (columns: FilingColumns, i: number): Filing => ({
   isInlineXBRL: Boolean(columns.isInlineXBRL[i]),
   isXBRLNumeric:
     columns.isXBRLNumeric[i] === null ? null : Boolean(columns.isXBRLNumeric[i]),
+  url: filingUrl(cik, columns.accessionNumber[i], columns.primaryDocument[i]),
 });
 
-export function toFilings(columns: FilingColumns, select: FilingSelection): Filing[] {
+export function toFilings(
+  columns: FilingColumns,
+  select: FilingSelection,
+  cik: string,
+): Filing[] {
   const count = rowCount(columns);
   const filings: Filing[] = [];
 
   for (let i = 0; i < count; i++) {
-    if (isSelected(columns, i, select)) filings.push(toFiling(columns, i));
+    if (isSelected(columns, i, select)) filings.push(toFiling(columns, i, cik));
   }
 
   return filings;

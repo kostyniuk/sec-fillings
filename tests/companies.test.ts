@@ -56,6 +56,7 @@ describe("GET /api/companies/:ticker/filings", () => {
       isXBRLNumeric: false,
       primaryDocument: "xslF345X06/form4.xml",
       primaryDocDescription: "FORM 4",
+      url: "https://www.sec.gov/Archives/edgar/data/320193/000114036126036226/xslF345X06/form4.xml",
     });
   });
 

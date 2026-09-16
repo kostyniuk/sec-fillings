@@ -3,6 +3,7 @@ import { EdgarShapeError } from "./integrations/edgar";
 import { InvalidCursorError } from "./lib/cursor";
 import { HttpError } from "./lib/http";
 import { companies } from "./routes/companies";
+import { debugEdgar } from "./routes/debug-edgar";
 import { filings } from "./routes/filings";
 import { health } from "./routes/health";
 import { UnknownTickerError } from "./domain";
@@ -30,6 +31,7 @@ export const app = new Elysia({ prefix: "/api" })
     }
   })
   .use(health)
+  .use(debugEdgar)
   .use(companies)
   .use(filings);
 

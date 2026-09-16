@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, FileDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { DataTableFeatures } from "./data-table-features";
@@ -13,6 +13,7 @@ export type FilingRow = {
   form: string;
   company: string;
   ticker: string;
+  url: string;
 };
 
 function FilingDateHeader() {
@@ -64,6 +65,18 @@ export const columns: ColumnDef<DataTableFeatures, FilingRow>[] = [
     header: () => <FilingDateHeader />,
     cell: ({ row }) => (
       <span className="tabular-nums">{row.original.filingDate}</span>
+    ),
+  },
+  {
+    accessorKey: "url",
+    header: "Document",
+    cell: ({ row }) => (
+      <Button asChild variant="ghost" size="sm">
+        <a href={row.original.url} target="_blank" rel="noreferrer">
+          <FileDown />
+          {row.original.form}
+        </a>
+      </Button>
     ),
   },
 ];

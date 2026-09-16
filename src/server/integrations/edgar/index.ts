@@ -48,6 +48,6 @@ export async function getCompanyFilings(
 
   return {
     company: toCompany(res),
-    filings: toFilings(res.filings.recent, select),
+    filings: toFilings(res.filings.recent, select, res.cik),
   };
 }

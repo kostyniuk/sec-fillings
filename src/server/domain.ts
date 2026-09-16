@@ -15,6 +15,7 @@ export type Filing = {
   isXBRLNumeric: boolean | null;
   primaryDocument: string;
   primaryDocDescription: string;
+  url: string;
 };
 
 export type Company = {

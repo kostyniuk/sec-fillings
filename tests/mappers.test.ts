@@ -4,6 +4,9 @@ import { EdgarShapeError } from "@/server/integrations/edgar/schemas";
 import { appleSubmissions, recentColumns } from "./fixtures/edgar";
 
 const EPOCH = "1970-01-01";
+const CIK = appleSubmissions.cik;
+const zip = (select: Parameters<typeof toFilings>[1], columns = recentColumns) =>
+  toFilings(columns, select, CIK);
 
 describe("padCik", () => {
   it("zero-pads to ten digits", () => {
@@ -24,7 +27,7 @@ describe("padCik", () => {
 
 describe("toFilings", () => {
   it("zips columns into rows, preserving index alignment", () => {
-    const filings = toFilings(recentColumns, { since: EPOCH });
+    const filings = zip({ since: EPOCH });
 
     expect(filings).toHaveLength(3);
     expect(filings.map((f) => f.accessionNumber)).toEqual(
@@ -33,10 +36,13 @@ describe("toFilings", () => {
     expect(filings.map((f) => f.form)).toEqual(["4", "10-Q", "10-K"]);
     expect(filings[1].primaryDocument).toBe("aapl-20260627.htm");
     expect(filings[1].size).toBe(8_123_456);
+    expect(filings[1].url).toBe(
+      "https://www.sec.gov/Archives/edgar/data/320193/000032019326000081/aapl-20260627.htm",
+    );
   });
 
   it("renames core_type and converts the XBRL flags", () => {
-    const [form4, tenQ] = toFilings(recentColumns, { since: EPOCH });
+    const [form4, tenQ] = zip({ since: EPOCH });
 
     expect(form4.coreType).toBe("4");
     expect(form4.isXBRL).toBe(false);
@@ -51,7 +57,7 @@ describe("toFilings", () => {
 
   it("drops filings older than the cutoff", () => {
     const cutoff = new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10);
-    const filings = toFilings(recentColumns, { since: cutoff });
+    const filings = zip({ since: cutoff });
 
     expect(filings).toHaveLength(2);
     expect(filings.every((f) => f.filingDate >= cutoff)).toBe(true);
@@ -60,14 +66,14 @@ describe("toFilings", () => {
 
   it("keeps a filing landing exactly on the cutoff", () => {
     const cutoff = recentColumns.filingDate[1];
-    const filings = toFilings(recentColumns, { since: cutoff });
+    const filings = zip({ since: cutoff });
 
     expect(filings.map((f) => f.filingDate)).toContain(cutoff);
   });
 
   it("keeps only the requested forms, case-insensitively", () => {
     const forms = new Set(["10-q"].map((f) => f.toUpperCase()));
-    const filings = toFilings(recentColumns, { since: EPOCH, forms });
+    const filings = zip({ since: EPOCH, forms });
 
     expect(filings.map((f) => f.form)).toEqual(["10-Q"]);
   });
@@ -75,8 +81,8 @@ describe("toFilings", () => {
   it("rejects misaligned columns instead of zipping garbage", () => {
     const broken = { ...recentColumns, form: ["4"] };
 
-    expect(() => toFilings(broken, { since: EPOCH })).toThrow(EdgarShapeError);
-    expect(() => toFilings(broken, { since: EPOCH })).toThrow(/column "form" has 1 rows/);
+    expect(() => zip({ since: EPOCH }, broken)).toThrow(EdgarShapeError);
+    expect(() => zip({ since: EPOCH }, broken)).toThrow(/column "form" has 1 rows/);
   });
 });
 
